@@ -2,6 +2,7 @@ import numpy as np
 import random
 import pygame
 import sys
+
 class Game:
     def __init__(self, game_mode="ai", render=0, width=4, height=4):
         self.game_mode = game_mode
