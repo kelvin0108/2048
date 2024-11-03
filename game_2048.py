@@ -28,7 +28,6 @@ class Game:
         self.done = False
         self.checked = False
         self.total_score = 0
-        self.reward = 0
         self.up, self.right, self.down, self.left = False, False, False, False
         return self.state
     
@@ -37,143 +36,187 @@ class Game:
         assert self.done == False, "The game has ended."
         self.reward = 0
         moved = False
-        if action == 0: #right
-            for i_h in range(self.height):
-                merged = False
-                for i_w in range(self.width-1):
-                    for i in range(i_w+1):
-                        if self.state[i_h, self.width-i_w-1+i] == 0 :
-                            self.state[i_h, self.width-i_w-1+i] = self.state[i_h, self.width-i_w-2+i]
-                            self.state[i_h, self.width-i_w-2+i] = 0
-                            moved = True
-                        elif self.state[i_h, self.width-i_w-1+i] == self.state[i_h, self.width-i_w-2+i] and merged == False:
-                            self.reward += self.state[i_h, self.width-i_w-1+i]
-                            self.state[i_h, self.width-i_w-1+i] += self.state[i_h, self.width-i_w-2+i]
-                            self.state[i_h, self.width-i_w-2+i] = 0
-                            merged = True
-                            moved = True
-        if action == 1: #down
-            for i_w in range(self.width):
-                merged = False
-                for i_h in range(self.height-1):
-                    for i in range(i_h+1):
-                        if self.state[self.height-i_h-1+i, i_w] == 0 :
-                            self.state[self.height-i_h-1+i, i_w] = self.state[self.height-i_h-2+i, i_w]
-                            self.state[self.height-i_h-2+i, i_w] = 0
-                            moved = True
-                        elif self.state[self.height-i_h-1+i, i_w] == self.state[self.height-i_h-2+i, i_w] and merged == False:
-                            self.reward += self.state[self.height-i_h-1+i, i_w]
-                            self.state[self.height-i_h-1+i, i_w] += self.state[self.height-i_h-2+i, i_w]
-                            self.state[self.height-i_h-2+i, i_w] = 0
-                            merged = True
-                            moved = True
-        if action == 2: #left
-            for i_h in range(self.height):
-                merged = False
-                for i_w in range(self.width-1):
-                    for i in range(i_w+1):
-                        if self.state[i_h, i_w-i] == 0 :
-                            self.state[i_h, i_w-i] = self.state[i_h, i_w-i+1]
-                            self.state[i_h, i_w-i+1] = 0
-                            moved = True
-                        elif self.state[i_h, i_w-i] == self.state[i_h, i_w-i+1] and merged == False:
-                            self.reward += self.state[i_h, i_w-i]
-                            self.state[i_h, i_w-i] += self.state[i_h, i_w-i+1]
-                            self.state[i_h, i_w-i+1] = 0
-                            merged = True
-                            moved = True
-        if action == 3: #up
-            for i_w in range(self.width):
-                merged = False
-                for i_h in range(self.height-1):
-                    for i in range(i_h+1):
-                        if self.state[i_h-i, i_w] == 0 :
-                            self.state[i_h-i, i_w] = self.state[i_h-i+1, i_w]
-                            self.state[i_h-i+1, i_w] = 0
-                            moved = True
-                        elif self.state[i_h-i, i_w] == self.state[i_h-i+1, i_w] and merged == False:
-                            self.reward += self.state[i_h-i, i_w]
-                            self.state[i_h-i, i_w] += self.state[i_h-i+1, i_w]
-                            self.state[i_h-i+1, i_w] = 0
-                            merged = True
-                            moved = True                                                   
 
-        if moved == True:
+        if action == 0:  # Right
+            for i_h in range(self.height):
+                row = self.state[i_h, :]
+                new_row = [num for num in row if num != 0]
+                merged_row = []
+                skip = False
+                for j in range(len(new_row) - 1, -1, -1):
+                    if skip:
+                        skip = False
+                        continue
+                    if j > 0 and new_row[j] == new_row[j - 1]:
+                        merged_row.insert(0, new_row[j] * 2)
+                        self.reward += new_row[j] * 2
+                        skip = True
+                        moved = True
+                    else:
+                        merged_row.insert(0, new_row[j])
+                while len(merged_row) < self.width:
+                    merged_row.insert(0, 0)
+                self.state[i_h, :] = merged_row
+
+        elif action == 1:  # Down
+            for i_w in range(self.width):
+                col = self.state[:, i_w]
+                new_col = [num for num in col if num != 0]
+                merged_col = []
+                skip = False
+                for j in range(len(new_col) - 1, -1, -1):
+                    if skip:
+                        skip = False
+                        continue
+                    if j > 0 and new_col[j] == new_col[j - 1]:
+                        merged_col.insert(0, new_col[j] * 2)
+                        self.reward += new_col[j] * 2
+                        skip = True
+                        moved = True
+                    else:
+                        merged_col.insert(0, new_col[j])
+                while len(merged_col) < self.height:
+                    merged_col.insert(0, 0)
+                self.state[:, i_w] = merged_col
+
+        elif action == 2:  # Left
+            for i_h in range(self.height):
+                row = self.state[i_h, :]
+                new_row = [num for num in row if num != 0]
+                merged_row = []
+                skip = False
+                for j in range(len(new_row)):
+                    if skip:
+                        skip = False
+                        continue
+                    if j < len(new_row) - 1 and new_row[j] == new_row[j + 1]:
+                        merged_row.append(new_row[j] * 2)
+                        self.reward += new_row[j] * 2
+                        skip = True
+                        moved = True
+                    else:
+                        merged_row.append(new_row[j])
+                while len(merged_row) < self.width:
+                    merged_row.append(0)
+                self.state[i_h, :] = merged_row
+
+        elif action == 3:  # Up
+            for i_w in range(self.width):
+                col = self.state[:, i_w]
+                new_col = [num for num in col if num != 0]
+                merged_col = []
+                skip = False
+                for j in range(len(new_col)):
+                    if skip:
+                        skip = False
+                        continue
+                    if j < len(new_col) - 1 and new_col[j] == new_col[j + 1]:
+                        merged_col.append(new_col[j] * 2)
+                        self.reward += new_col[j] * 2
+                        skip = True
+                        moved = True
+                    else:
+                        merged_col.append(new_col[j])
+                while len(merged_col) < self.height:
+                    merged_col.append(0)
+                self.state[:, i_w] = merged_col
+
+        # 若有移動，隨機生成一個新的 2
+        if moved:
             zero_positions = np.argwhere(self.state == 0)
             if zero_positions.size > 0:
                 random_index = np.random.choice(len(zero_positions))
                 random_position = zero_positions[random_index]    
                 self.state[random_position[0], random_position[1]] = 2
-        
+
         self.total_score += self.reward
-        info = {"score":self.total_score}
+        info = {"score": self.total_score}
         
         biggest_num = np.max(self.state)
 
+        # 檢查是否還有可以進行的移動
         if not any(self.check_move(act) for act in range(4)):
             self.done = True     
 
-        return self.state, self.reward, self.done, info, biggest_num
-    
+        return self.state, self.reward, self.done, info, biggest_num    
 
     def check_move(self, action):
         moved = False
-        merged = False
-        temp_state = self.state.copy()
-        if action == 0: #right
+        temp_state = self.state.copy()  # 保留原始状态，以便检查后还原
+        if action == 0:  # Right
             for i_h in range(self.height):
-                for i_w in range(self.width-1):
-                    for i in range(i_w+1):
-                        if self.state[i_h, self.width-i_w-1+i] == 0 :
-                            self.state[i_h, self.width-i_w-1+i] = self.state[i_h, self.width-i_w-2+i]
-                            self.state[i_h, self.width-i_w-2+i] = 0
-                            moved = True
-                        elif self.state[i_h, self.width-i_w-1+i] == self.state[i_h, self.width-i_w-2+i] and merged == False:
-                            self.state[i_h, self.width-i_w-1+i] += self.state[i_h, self.width-i_w-2+i]
-                            self.state[i_h, self.width-i_w-2+i] = 0
-                            merged = True
-                            moved = True
-        if action == 1: #down
+                row = temp_state[i_h, :]
+                new_row = [num for num in row if num != 0]
+                skip = False
+                for j in range(len(new_row) - 1, -1, -1):
+                    if skip:
+                        skip = False
+                        continue
+                    if j > 0 and new_row[j] == new_row[j - 1]:
+                        moved = True
+                        break
+                    elif new_row[j] == 0 or (j > 0 and new_row[j - 1] == 0):
+                        moved = True
+                        break
+                if moved:
+                    break
+
+        elif action == 1:  # Down
             for i_w in range(self.width):
-                for i_h in range(self.height-1):
-                    for i in range(i_h+1):
-                        if self.state[self.height-i_h-1+i, i_w] == 0 :
-                            self.state[self.height-i_h-1+i, i_w] = self.state[self.height-i_h-2+i, i_w]
-                            self.state[self.height-i_h-2+i, i_w] = 0
-                            moved = True
-                        elif self.state[self.height-i_h-1+i, i_w] == self.state[self.height-i_h-2+i, i_w] and merged == False:
-                            self.state[self.height-i_h-1+i, i_w] += self.state[self.height-i_h-2+i, i_w]
-                            self.state[self.height-i_h-2+i, i_w] = 0
-                            merged = True
-                            moved = True
-        if action == 2: #left
+                col = temp_state[:, i_w]
+                new_col = [num for num in col if num != 0]
+                skip = False
+                for j in range(len(new_col) - 1, -1, -1):
+                    if skip:
+                        skip = False
+                        continue
+                    if j > 0 and new_col[j] == new_col[j - 1]:
+                        moved = True
+                        break
+                    elif new_col[j] == 0 or (j > 0 and new_col[j - 1] == 0):
+                        moved = True
+                        break
+                if moved:
+                    break
+
+        elif action == 2:  # Left
             for i_h in range(self.height):
-                for i_w in range(self.width-1):
-                    for i in range(i_w+1):
-                        if self.state[i_h, i_w-i] == 0 :
-                            self.state[i_h, i_w-i] = self.state[i_h, i_w-i+1]
-                            self.state[i_h, i_w-i+1] = 0
-                            moved = True
-                        elif self.state[i_h, i_w-i] == self.state[i_h, i_w-i+1] and merged == False:
-                            self.state[i_h, i_w-i] += self.state[i_h, i_w-i+1]
-                            self.state[i_h, i_w-i+1] = 0
-                            merged = True
-                            moved = True
-        if action == 3: #up
+                row = temp_state[i_h, :]
+                new_row = [num for num in row if num != 0]
+                skip = False
+                for j in range(len(new_row)):
+                    if skip:
+                        skip = False
+                        continue
+                    if j < len(new_row) - 1 and new_row[j] == new_row[j + 1]:
+                        moved = True
+                        break
+                    elif new_row[j] == 0 or (j < len(new_row) - 1 and new_row[j + 1] == 0):
+                        moved = True
+                        break
+                if moved:
+                    break
+
+        elif action == 3:  # Up
             for i_w in range(self.width):
-                for i_h in range(self.height-1):
-                    for i in range(i_h+1):
-                        if self.state[i_h-i, i_w] == 0 :
-                            self.state[i_h-i, i_w] = self.state[i_h-i+1, i_w]
-                            self.state[i_h-i+1, i_w] = 0
-                            moved = True
-                        elif self.state[i_h-i, i_w] == self.state[i_h-i+1, i_w] and merged == False:
-                            self.state[i_h-i, i_w] += self.state[i_h-i+1, i_w]
-                            self.state[i_h-i+1, i_w] = 0
-                            merged = True
-                            moved = True
-        self.state = temp_state.copy()
+                col = temp_state[:, i_w]
+                new_col = [num for num in col if num != 0]
+                skip = False
+                for j in range(len(new_col)):
+                    if skip:
+                        skip = False
+                        continue
+                    if j < len(new_col) - 1 and new_col[j] == new_col[j + 1]:
+                        moved = True
+                        break
+                    elif new_col[j] == 0 or (j < len(new_col) - 1 and new_col[j + 1] == 0):
+                        moved = True
+                        break
+                if moved:
+                    break
+
         return moved
+
     
     def render(self):
         square_size = min(self.screen_width, self.screen_height) // max(self.width, self.height)
@@ -215,6 +258,7 @@ class Game:
 if __name__ == "__main__":
     game = Game()
     game.reset()
+    game.state = np.full((4, 4), 2)
     print(game.state)
     game.step(0)
     print(game.state)
